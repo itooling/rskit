@@ -1,6 +1,6 @@
 [package]
 name = "rskit"
-version = "0.0.5"
+version = "0.0.6"
 edition = "2021"
 license = "MIT"
 description="rust kit"
@@ -17,7 +17,7 @@ ecdh = ["p256"]
 
 [dependencies]
 log = "0.4.21"
-fast_log = "1.6.12"
+fast_log = "1.7.3"
 serde = { version = "1.0.202", features = ["derive"] }
 serde_json = "1.0.117"
 sha2 = "0.10.8"
@@ -30,3 +30,4 @@ aes = "0.8.4"
 md5 = "0.7.0"
 p256 = { version = "0.13.2", features = ["ecdh"], optional = true }
 rand = "0.8.5"
+chrono = { version = "0.4.38", features = ["serde"] }

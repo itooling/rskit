@@ -4,8 +4,11 @@ use std::{thread, time::Duration};
 use fast_log::{
     consts::LogSize,
     error::LogError,
-    plugin::{file_split::RollingType, packer::LogPacker},
-    Logger,
+    plugin::{
+        file_split::{KeepType, Rolling, RollingType},
+        packer::LogPacker,
+    },
+    Config, Logger,
 };
 
 pub mod base;
@@ -17,38 +20,39 @@ pub mod sha;
 #[cfg(feature = "ecdh")]
 pub mod ecdh;
 
-#[derive(Clone)]
 pub struct Log<'a> {
     pub file_path: &'a str,
-    pub temp_size: LogSize,
-    pub chan_len: Option<usize>,
-    pub roll_type: RollingType,
+    pub rolling: Rolling,
+    pub keep_type: KeepType,
     pub packer: LogPacker,
 }
 impl Default for Log<'_> {
     fn default() -> Self {
-        Self {
-            file_path: "logs/out.log",
-            temp_size: LogSize::MB(100),
-            chan_len: Some(100000),
-            roll_type: RollingType::All,
+        Log {
+            file_path: "log/app.log",
+            rolling: Rolling::new(RollingType::BySize(LogSize::MB(100))),
+            keep_type: KeepType::All,
             packer: LogPacker {},
         }
     }
 }
 
 impl Log<'_> {
-    pub fn init(&self) -> Result<&Logger, LogError> {
+    pub fn init(&self) -> Result<&'static Logger, LogError> {
+        fast_log::init(
+            Config::new()
+                .chan_len(Some(100000))
+                .file("log/app.log")
+                .console(),
+        )
+    }
+
+    pub fn init_split(self) -> Result<&'static Logger, LogError> {
         fast_log::init(
             fast_log::Config::new()
                 .console()
-                .chan_len(self.chan_len)
-                .file_split(
-                    self.file_path,
-                    self.temp_size,
-                    self.roll_type,
-                    self.packer.clone(),
-                ),
+                .chan_len(Some(100000))
+                .file_split(self.file_path, self.rolling, self.keep_type, self.packer),
         )
     }
 }
@@ -56,6 +60,6 @@ impl Log<'_> {
 #[test]
 fn test_log() {
     Log::default().init().unwrap();
-    log::info!("test log...");
+    log::info!("test log ...");
     thread::sleep(Duration::from_secs(1));
 }
