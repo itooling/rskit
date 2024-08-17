@@ -1,5 +1,5 @@
 use bincode;
-use chrono::{DateTime, Local};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 /// Serialize to binrary
@@ -34,20 +34,22 @@ pub fn from_json<'de, T: Deserialize<'de>>(s: &'de str) -> Result<T, String> {
     }
 }
 
-fn serialize_datatime<S: serde::Serializer>(
-    data: &DateTime<Local>,
+pub const DATETIME_FORMAT: &str = "%Y-%m-%d %H:%M:%S%.3f";
+
+pub fn serialize_datatime<S: serde::Serializer>(
+    data: &DateTime<Utc>,
     s: S,
 ) -> Result<S::Ok, S::Error> {
-    s.serialize_str(&data.format("%Y-%m-%d %H:%M:%S.%3f %z").to_string())
+    s.serialize_str(&data.format(DATETIME_FORMAT).to_string())
 }
 
-fn deserialize_datatime<'de, D: serde::Deserializer<'de>>(
+pub fn deserialize_datatime<'de, D: serde::Deserializer<'de>>(
     d: D,
-) -> Result<DateTime<Local>, D::Error> {
+) -> Result<DateTime<Utc>, D::Error> {
     let s = String::deserialize(d)?;
-    DateTime::parse_from_str(&s, "%Y-%m-%d %H:%M:%S.%3f %z")
-        .map_err(serde::de::Error::custom)
-        .map(|d| d.into())
+    let naive: NaiveDateTime =
+        NaiveDateTime::parse_from_str(&s, DATETIME_FORMAT).map_err(serde::de::Error::custom)?;
+    Ok(DateTime::<Utc>::from_naive_utc_and_offset(naive, Utc))
 }
 #[derive(Debug, Serialize, Deserialize)]
 struct Aoo {
@@ -57,7 +59,7 @@ struct Aoo {
         serialize_with = "serialize_datatime",
         deserialize_with = "deserialize_datatime"
     )]
-    date: DateTime<Local>,
+    date: DateTime<Utc>,
 }
 
 #[cfg(test)]
@@ -69,7 +71,7 @@ mod tests {
         let aoo = Aoo {
             name: String::from("ok"),
             age: 18,
-            date: Local::now(),
+            date: Utc::now(),
         };
 
         match to_json(aoo) {
@@ -82,7 +84,7 @@ mod tests {
 
     #[test]
     fn fjson() {
-        let s = r#"{"name":"ok","age":18, "date": "2024-08-15 11:00:16.100 +0800"}"#;
+        let s = r#"{"name":"ok","age":18, "date": "2024-08-15 11:00:16.100"}"#;
         match from_json::<'_, Aoo>(s) {
             Ok(aoo) => {
                 println!("aoo is: {:?}", aoo);
