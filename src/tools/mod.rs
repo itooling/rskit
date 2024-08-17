@@ -1,5 +1,6 @@
 pub mod base;
 pub mod crypto;
+pub mod db;
 #[cfg(feature = "ecdh")]
 pub mod ecdh;
 pub mod err;
