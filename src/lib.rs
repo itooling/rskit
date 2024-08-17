@@ -1,5 +1,4 @@
-#[cfg(test)]
-use std::{thread, time::Duration};
+pub mod tools;
 
 use fast_log::{
     consts::LogSize,
@@ -11,28 +10,23 @@ use fast_log::{
     Config, Logger,
 };
 
-pub mod base;
-pub mod crypto;
-pub mod err;
-pub mod sd;
-pub mod sha;
-
-#[cfg(feature = "ecdh")]
-pub mod ecdh;
-
 pub struct Log<'a> {
-    pub file_path: &'a str,
-    pub rolling: Rolling,
-    pub keep_type: KeepType,
+    pub chan: Option<usize>,
+    pub path: &'a str,
+    pub roll: Rolling,
+    pub keep: KeepType,
     pub packer: LogPacker,
+    pub level: log::LevelFilter,
 }
 impl Default for Log<'_> {
     fn default() -> Self {
         Log {
-            file_path: "log/app.log",
-            rolling: Rolling::new(RollingType::BySize(LogSize::MB(100))),
-            keep_type: KeepType::All,
+            chan: Some(100000),
+            path: "./logs/app.log",
+            roll: Rolling::new(RollingType::BySize(LogSize::MB(100))),
+            keep: KeepType::KeepNum(10),
             packer: LogPacker {},
+            level: log::LevelFilter::Info,
         }
     }
 }
@@ -41,8 +35,18 @@ impl Log<'_> {
     pub fn init(&self) -> Result<&'static Logger, LogError> {
         fast_log::init(
             Config::new()
-                .chan_len(Some(100000))
-                .file("log/app.log")
+                .level(self.level)
+                .chan_len(self.chan)
+                .console(),
+        )
+    }
+
+    pub fn init_file(&self) -> Result<&'static Logger, LogError> {
+        fast_log::init(
+            Config::new()
+                .level(self.level)
+                .chan_len(self.chan)
+                .file(self.path)
                 .console(),
         )
     }
@@ -50,15 +54,17 @@ impl Log<'_> {
     pub fn init_split(self) -> Result<&'static Logger, LogError> {
         fast_log::init(
             fast_log::Config::new()
-                .console()
-                .chan_len(Some(100000))
-                .file_split(self.file_path, self.rolling, self.keep_type, self.packer),
+                .level(self.level)
+                .chan_len(self.chan)
+                .file_split(self.path, self.roll, self.keep, self.packer)
+                .console(),
         )
     }
 }
 
 #[test]
 fn test_log() {
+    use std::{thread, time::Duration};
     Log::default().init().unwrap();
     log::info!("test log ...");
     thread::sleep(Duration::from_secs(1));

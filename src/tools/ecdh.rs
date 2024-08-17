@@ -1,7 +1,7 @@
 use p256::{ecdh::diffie_hellman, PublicKey, SecretKey};
 use rand::thread_rng;
 
-use crate::err::BaseErr;
+use super::err::BaseErr;
 
 pub fn generate_keypair() -> (String, String) {
     let sk = SecretKey::random(&mut thread_rng());
