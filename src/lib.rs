@@ -9,6 +9,7 @@ use fast_log::{
     },
     Config, Logger,
 };
+use serde::{Deserialize, Serialize};
 
 pub struct Log<'a> {
     pub chan: Option<usize>,
@@ -62,10 +63,51 @@ impl Log<'_> {
     }
 }
 
-#[test]
-fn test_log() {
-    use std::{thread, time::Duration};
-    Log::default().init().unwrap();
-    log::info!("test log ...");
-    thread::sleep(Duration::from_secs(1));
+#[derive(Debug, Serialize, Deserialize)]
+struct Database {
+    host: String,
+    port: usize,
+    username: String,
+    password: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Settings {
+    database: Database,
+}
+
+pub fn init_config() {
+    let name = std::env::var("RUN_ENV").unwrap_or_else(|_| "dev".into());
+    match config::Config::builder()
+        .add_source(config::File::with_name(&format!("./{}.toml", name)))
+        .build()
+    {
+        Ok(cfg) => match cfg.try_deserialize::<Settings>() {
+            Ok(s) => {
+                println!("settings: {:?}", s);
+            }
+            Err(e) => log::error!("deserialize config error: {:?}", e),
+        },
+        Err(e) => {
+            log::error!("init config error: {:?}", e);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_log() {
+        use std::{thread, time::Duration};
+        Log::default().init().unwrap();
+        log::info!("test log ...");
+        thread::sleep(Duration::from_secs(1));
+    }
+
+    #[test]
+    fn test_config() {
+        init_config();
+    }
 }
