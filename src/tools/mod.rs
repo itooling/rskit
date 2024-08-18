@@ -5,5 +5,6 @@ pub mod db;
 pub mod ecdh;
 pub mod err;
 pub mod http;
+pub mod nosql;
 pub mod sd;
 pub mod sha;
