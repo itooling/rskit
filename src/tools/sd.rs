@@ -47,7 +47,7 @@ pub fn deserialize_datatime<'de, D: serde::Deserializer<'de>>(
     d: D,
 ) -> Result<DateTime<Utc>, D::Error> {
     let s = String::deserialize(d)?;
-    let naive: NaiveDateTime =
+    let naive =
         NaiveDateTime::parse_from_str(&s, DATETIME_FORMAT).map_err(serde::de::Error::custom)?;
     Ok(DateTime::<Utc>::from_naive_utc_and_offset(naive, Utc))
 }
