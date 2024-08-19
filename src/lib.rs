@@ -1,5 +1,11 @@
 pub mod tools;
 
+use std::{
+    any::Any,
+    collections::HashMap,
+    sync::{LazyLock, Mutex},
+};
+
 use fast_log::{
     consts::LogSize,
     error::LogError,
@@ -9,21 +15,43 @@ use fast_log::{
     },
     Config, Logger,
 };
+use log::LevelFilter;
 use serde::{Deserialize, Serialize};
 
-pub struct Log<'a> {
+type ValueType = Box<dyn Any + Sync + Send>;
+type CacheType = HashMap<String, ValueType>;
+
+pub static CACHE: LazyLock<Mutex<CacheType>> = LazyLock::new(|| Mutex::new(HashMap::new()));
+
+pub fn cache_set(k: String, v: ValueType) -> Option<ValueType> {
+    if let Ok(mut cache) = CACHE.lock() {
+        return cache.insert(k, v);
+    }
+    None
+}
+
+pub fn cache_get<'a>(cache: &'a CacheType, k: &String) -> Option<&'a ValueType> {
+    cache.get(k)
+}
+
+pub struct Log {
     pub chan: Option<usize>,
-    pub path: &'a str,
+    pub path: String,
     pub roll: Rolling,
     pub keep: KeepType,
     pub packer: LogPacker,
-    pub level: log::LevelFilter,
+    pub level: LevelFilter,
 }
-impl Default for Log<'_> {
+
+impl Default for Log {
     fn default() -> Self {
+        let dir = match std::env::current_dir() {
+            Ok(p) => p.to_str().expect("current dir error").to_string(),
+            Err(_) => "./".to_string(),
+        };
         Log {
             chan: Some(100000),
-            path: "./logs/app.log",
+            path: format!("{}/logs/app.log", dir),
             roll: Rolling::new(RollingType::BySize(LogSize::MB(100))),
             keep: KeepType::KeepNum(10),
             packer: LogPacker {},
@@ -32,7 +60,7 @@ impl Default for Log<'_> {
     }
 }
 
-impl Log<'_> {
+impl Log {
     pub fn init(&self) -> Result<&'static Logger, LogError> {
         fast_log::init(
             Config::new()
@@ -47,7 +75,7 @@ impl Log<'_> {
             Config::new()
                 .level(self.level)
                 .chan_len(self.chan)
-                .file(self.path)
+                .file(&self.path)
                 .console(),
         )
     }
@@ -57,7 +85,7 @@ impl Log<'_> {
             fast_log::Config::new()
                 .level(self.level)
                 .chan_len(self.chan)
-                .file_split(self.path, self.roll, self.keep, self.packer)
+                .file_split(&self.path, self.roll, self.keep, self.packer)
                 .console(),
         )
     }
