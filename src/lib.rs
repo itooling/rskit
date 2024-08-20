@@ -107,8 +107,8 @@ pub struct Settings {
 pub fn init_config() {
     let name = std::env::var("RUN_ENV").unwrap_or_else(|_| "dev".into());
     match config::Config::builder()
-        .add_source(config::File::with_name("app.toml").required(false))
-        .add_source(config::File::with_name(&format!("{}.toml", name)))
+        .add_source(config::File::with_name(&format!("{}.toml", name)).required(false))
+        .add_source(config::File::with_name("app.toml"))
         .build()
     {
         Ok(cfg) => match cfg.try_deserialize::<Settings>() {
