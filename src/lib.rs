@@ -92,16 +92,13 @@ impl Log {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Database {
-    host: String,
-    port: usize,
-    username: String,
-    password: String,
+struct App {
+    version: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Settings {
-    database: Database,
+    app: App,
 }
 
 pub fn init_config() {
