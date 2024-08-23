@@ -1,6 +1,6 @@
 [package]
 name = "rskit"
-version = "0.0.17"
+version = "0.0.18"
 edition = "2021"
 license = "MIT"
 description="rust kit"
@@ -34,3 +34,4 @@ sqlx = { version = "0.8.0", features = ["chrono", "macros", "runtime-tokio", "sq
 tokio = { version = "1.39.2", features = ["full"] }
 redis = "0.26.1"
 config = "0.14.0"
+rsa = "0.9.6"

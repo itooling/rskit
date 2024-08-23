@@ -1,5 +1,5 @@
 use bincode;
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, Local, NaiveDateTime, TimeZone};
 use serde::{Deserialize, Serialize};
 
 /// Serialize to binrary
@@ -36,30 +36,27 @@ pub fn from_json<'de, T: Deserialize<'de>>(s: &'de str) -> Result<T, String> {
 
 pub const DATETIME_FORMAT: &str = "%Y-%m-%d %H:%M:%S%.3f";
 
-pub fn serialize_datatime<S: serde::Serializer>(
-    data: &DateTime<Utc>,
-    s: S,
-) -> Result<S::Ok, S::Error> {
+pub fn sdt<S: serde::Serializer>(data: &DateTime<Local>, s: S) -> Result<S::Ok, S::Error> {
     s.serialize_str(&data.format(DATETIME_FORMAT).to_string())
 }
 
-pub fn deserialize_datatime<'de, D: serde::Deserializer<'de>>(
-    d: D,
-) -> Result<DateTime<Utc>, D::Error> {
+pub fn ddt<'de, D: serde::Deserializer<'de>>(d: D) -> Result<DateTime<Local>, D::Error> {
     let s = String::deserialize(d)?;
+    println!("s is {}", s);
     let naive =
         NaiveDateTime::parse_from_str(&s, DATETIME_FORMAT).map_err(serde::de::Error::custom)?;
-    Ok(DateTime::<Utc>::from_naive_utc_and_offset(naive, Utc))
+
+    match Local.from_local_datetime(&naive).single() {
+        Some(dt) => Ok(dt),
+        None => Err("deserialize datetime error").map_err(serde::de::Error::custom),
+    }
 }
 #[derive(Debug, Serialize, Deserialize)]
 struct Aoo {
     name: String,
     age: i32,
-    #[serde(
-        serialize_with = "serialize_datatime",
-        deserialize_with = "deserialize_datatime"
-    )]
-    date: DateTime<Utc>,
+    #[serde(serialize_with = "sdt", deserialize_with = "ddt")]
+    date: DateTime<Local>,
 }
 
 #[cfg(test)]
@@ -71,7 +68,7 @@ mod tests {
         let aoo = Aoo {
             name: String::from("ok"),
             age: 18,
-            date: Utc::now(),
+            date: Local::now(),
         };
 
         match to_json(aoo) {

@@ -2,9 +2,13 @@
 
 use std::sync::LazyLock;
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
-use sqlx::{prelude::FromRow, sqlite::SqliteConnectOptions, SqlitePool};
+use sqlx::{
+    prelude::{FromRow, Type},
+    sqlite::SqliteConnectOptions,
+    SqlitePool,
+};
 
 pub static SPOOL: LazyLock<SqlitePool> = LazyLock::new(|| {
     tokio::task::block_in_place(|| {
@@ -41,17 +45,26 @@ pub static SPOOL: LazyLock<SqlitePool> = LazyLock::new(|| {
     })
 });
 
+#[derive(Debug, Default, Serialize, Deserialize, Type)]
+enum Sex {
+    Male,
+    Female,
+    #[default]
+    Unkonwn,
+}
+
 #[derive(Debug, Default, Serialize, Deserialize, FromRow)]
 struct User {
     id: Option<u64>,
-    created_at: Option<DateTime<Utc>>,
-    updated_at: Option<DateTime<Utc>>,
+    created_at: Option<DateTime<Local>>,
+    updated_at: Option<DateTime<Local>>,
     created_by: Option<String>,
     updated_by: Option<String>,
     username: Option<String>,
     nickname: Option<String>,
     password: Option<String>,
     age: Option<u32>,
+    sex: Option<Sex>,
 }
 
 impl User {
