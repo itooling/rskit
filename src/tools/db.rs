@@ -31,7 +31,8 @@ pub static SPOOL: LazyLock<SqlitePool> = LazyLock::new(|| {
                     username text,
                     nickname text,
                     password text,
-                    age int
+                    age int,
+                    sex text
                 )
             "#;
 
@@ -50,7 +51,8 @@ enum Sex {
     Male,
     Female,
     #[default]
-    Unkonwn,
+    #[serde(rename = "unknown")]
+    Unknown,
 }
 
 #[derive(Debug, Default, Serialize, Deserialize, FromRow)]

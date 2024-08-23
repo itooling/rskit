@@ -64,7 +64,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn tjson() {
+    fn test_to_json() {
         let aoo = Aoo {
             name: String::from("ok"),
             age: 18,
@@ -80,7 +80,7 @@ mod tests {
     }
 
     #[test]
-    fn fjson() {
+    fn test_from_json() {
         let s = r#"{"name":"ok","age":18, "date": "2024-08-15 11:00:16.100"}"#;
         match from_json::<'_, Aoo>(s) {
             Ok(aoo) => {

@@ -1,7 +1,7 @@
 use p256::{ecdh::diffie_hellman, PublicKey, SecretKey};
 use rand::thread_rng;
 
-use super::err::BaseErr;
+use super::err::Error;
 
 pub fn generate_keypair() -> (String, String) {
     let sk = SecretKey::random(&mut thread_rng());
@@ -19,7 +19,7 @@ pub fn generate_keypair() -> (String, String) {
     (sk_str, pk_str)
 }
 
-pub fn generate_shared(sk: String, pk: String) -> Result<String, BaseErr> {
+pub fn generate_shared(sk: String, pk: String) -> Result<String, Error> {
     if let Ok(sks) = hex::decode(sk) {
         if let Ok(pks) = hex::decode(pk) {
             let secret_key = SecretKey::from_slice(&sks).expect("secret key error");
@@ -30,7 +30,7 @@ pub fn generate_shared(sk: String, pk: String) -> Result<String, BaseErr> {
             return Ok(res);
         }
     }
-    Err(BaseErr::EcdhError(String::from("generate shared error")))
+    Err(Error::EcdhError(String::from("generate shared error")))
 }
 
 #[test]

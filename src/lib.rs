@@ -128,12 +128,13 @@ mod tests {
     fn test_log() {
         use std::{thread, time::Duration};
         Log::default().init().unwrap();
-        log::info!("test log ...");
+        log::info!("init log ...");
         thread::sleep(Duration::from_secs(1));
     }
 
     #[test]
     fn test_config() {
         init_config();
+        log::info!("init config ...");
     }
 }

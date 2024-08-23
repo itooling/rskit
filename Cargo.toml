@@ -9,7 +9,7 @@ repository = "https://github.com/itooling/rskit"
 
 
 [features]
-default = ["ecdh"]
+default = []
 ecdh = ["p256"]
 
 
@@ -34,4 +34,4 @@ sqlx = { version = "0.8.0", features = ["chrono", "macros", "runtime-tokio", "sq
 tokio = { version = "1.39.2", features = ["full"] }
 redis = "0.26.1"
 config = "0.14.0"
-rsa = "0.9.6"
+rsa = { version = "0.9.6", features = ["serde", "sha2"] }
