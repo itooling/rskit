@@ -5,22 +5,24 @@ use base64::{prelude::BASE64_STANDARD, Engine};
 use md5;
 use rsa::{
     pkcs8::{DecodePrivateKey, DecodePublicKey, EncodePrivateKey, EncodePublicKey},
-    rand_core::OsRng,
     Pkcs1v15Encrypt, RsaPrivateKey, RsaPublicKey,
 };
 
+use aes_gcm::{aead::Aead, Aes256Gcm, Key, KeyInit, Nonce};
+
 use crate::tools::err::Error;
+
 type Aes128CbcEnc = cbc::Encryptor<aes::Aes128>;
 type Aes128CbcDec = cbc::Decryptor<aes::Aes128>;
 
-/// encrypt
+/// encrypt cbc
 fn encrypt_aes_cbc(secret: &[u8], data: &[u8]) -> Vec<u8> {
     let key = &md5::compute(secret).0;
     let res = Aes128CbcEnc::new(key.into(), key.into()).encrypt_padded_vec_mut::<Pkcs7>(data);
     res.to_vec()
 }
 
-/// decrypt
+/// decrypt cbc
 fn decrypt_aes_cbc(secret: &[u8], data: &[u8]) -> Vec<u8> {
     let key = &md5::compute(secret).0;
     let res = Aes128CbcDec::new(key.into(), key.into())
@@ -29,12 +31,28 @@ fn decrypt_aes_cbc(secret: &[u8], data: &[u8]) -> Vec<u8> {
     res.to_vec()
 }
 
+/// encrypt gcm
+fn encrypt_aes_gcm(secret: &[u8], nonce: &[u8], data: &[u8]) -> Vec<u8> {
+    let key = Key::<Aes256Gcm>::from_slice(secret);
+    let nonce = Nonce::from_slice(nonce);
+    let cipher = Aes256Gcm::new(&key);
+    cipher.encrypt(&nonce, data).unwrap()
+}
+
+/// decrypt gcm
+fn decrypt_aes_gcm(secret: &[u8], nonce: &[u8], data: &[u8]) -> Vec<u8> {
+    let key = Key::<Aes256Gcm>::from_slice(secret);
+    let nonce = Nonce::from_slice(nonce);
+    let cipher = Aes256Gcm::new(&key);
+    cipher.decrypt(&nonce, data).unwrap()
+}
+
 /// generate rsa key pair
 pub fn generate_rsa_pair(mut bits: Option<usize>) -> (String, String) {
     if let None = bits {
         bits = Some(1024);
     }
-    let mut rng = OsRng;
+    let mut rng = rsa::rand_core::OsRng;
     let pri_key = RsaPrivateKey::new(&mut rng, bits.unwrap()).unwrap();
     let pub_key = RsaPublicKey::from(&pri_key);
     (
@@ -51,7 +69,7 @@ pub fn generate_rsa_pair(mut bits: Option<usize>) -> (String, String) {
 fn encrypt_rsa_byte(pub_key: &[u8], data: &[u8]) -> Result<Vec<u8>, Error> {
     match RsaPublicKey::from_public_key_der(pub_key) {
         Ok(pk) => {
-            let mut rng = OsRng;
+            let mut rng = rsa::rand_core::OsRng;
             pk.encrypt(&mut rng, Pkcs1v15Encrypt, data)
                 .map_err(Error::custom)
         }
@@ -72,7 +90,7 @@ fn encrypt_rsa_base(pub_key: &str, data: &[u8]) -> Result<Vec<u8>, Error> {
     match BASE64_STANDARD.decode(pub_key) {
         Ok(pk) => match RsaPublicKey::from_public_key_der(&pk) {
             Ok(pk) => {
-                let mut rng = OsRng;
+                let mut rng = rsa::rand_core::OsRng;
                 pk.encrypt(&mut rng, Pkcs1v15Encrypt, data)
                     .map_err(Error::custom)
             }
