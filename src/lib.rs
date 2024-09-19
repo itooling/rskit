@@ -3,7 +3,7 @@ pub mod tools;
 use std::{
     any::Any,
     collections::HashMap,
-    sync::{LazyLock, Mutex},
+    sync::{LazyLock, RwLock},
 };
 
 use fast_log::{
@@ -18,20 +18,25 @@ use fast_log::{
 use log::LevelFilter;
 use serde::{Deserialize, Serialize};
 
-type ValueType = Box<dyn Any + Sync + Send>;
+type ValueType = Box<dyn Any + Send + Sync>;
 type CacheType = HashMap<String, ValueType>;
 
-pub static CACHE: LazyLock<Mutex<CacheType>> = LazyLock::new(|| Mutex::new(HashMap::new()));
+pub static CACHE: LazyLock<RwLock<CacheType>> = LazyLock::new(|| RwLock::new(HashMap::new()));
 
-pub fn cache_set(k: String, v: ValueType) -> Option<ValueType> {
-    if let Ok(mut cache) = CACHE.lock() {
-        return cache.insert(k, v);
-    }
-    None
+pub fn cache_set<V>(k: String, v: V)
+where
+    V: 'static + Send + Sync + Clone,
+{
+    let mut map = CACHE.write().unwrap();
+    map.insert(k, Box::new(v));
 }
 
-pub fn cache_get<'a>(cache: &'a CacheType, k: &String) -> Option<&'a ValueType> {
-    cache.get(k)
+pub fn cache_get<V>(k: &str) -> Option<V>
+where
+    V: 'static + Send + Sync + Clone,
+{
+    let map = CACHE.read().unwrap();
+    map.get(k)?.downcast_ref().cloned()
 }
 
 pub struct Log {
