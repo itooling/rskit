@@ -18,22 +18,21 @@ use fast_log::{
 use log::LevelFilter;
 use serde::{Deserialize, Serialize};
 
-type ValueType = Box<dyn Any + Send + Sync>;
-type CacheType = HashMap<String, ValueType>;
+type Cache = HashMap<String, Box<dyn Any + Send + Sync>>;
 
-pub static CACHE: LazyLock<RwLock<CacheType>> = LazyLock::new(|| RwLock::new(HashMap::new()));
+pub static CACHE: LazyLock<RwLock<Cache>> = LazyLock::new(|| RwLock::new(HashMap::new()));
 
 pub fn cache_set<V>(k: String, v: V)
 where
-    V: 'static + Send + Sync + Clone,
+    V: Any + Send + Sync,
 {
     let mut map = CACHE.write().unwrap();
     map.insert(k, Box::new(v));
 }
 
-pub fn cache_get<V>(k: &str) -> Option<V>
+pub fn cache_get<V>(k: &str) -> Option<&V>
 where
-    V: 'static + Send + Sync + Clone,
+    V: Any + Send + Sync,
 {
     let map = CACHE.read().unwrap();
     map.get(k)?.downcast_ref().cloned()
