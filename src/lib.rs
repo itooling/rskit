@@ -22,20 +22,22 @@ type Cache = HashMap<String, Box<dyn Any + Send + Sync>>;
 
 pub static CACHE: LazyLock<RwLock<Cache>> = LazyLock::new(|| RwLock::new(HashMap::new()));
 
-pub fn cache_set<V>(k: String, v: V)
+pub fn cache_set<V>(k: &str, v: V) -> Option<V>
 where
-    V: Any + Send + Sync,
+    V: Any + Send + Sync + Clone,
 {
     let mut map = CACHE.write().unwrap();
-    map.insert(k, Box::new(v));
+    map.insert(k.to_string(), Box::new(v))?
+        .downcast_ref::<V>()
+        .cloned()
 }
 
-pub fn cache_get<V>(k: &str) -> Option<&V>
+pub fn cache_get<V>(k: &str) -> Option<V>
 where
-    V: Any + Send + Sync,
+    V: Any + Send + Sync + Clone,
 {
     let map = CACHE.read().unwrap();
-    map.get(k)?.downcast_ref().cloned()
+    map.get(k)?.downcast_ref::<V>().cloned()
 }
 
 pub struct Log {
