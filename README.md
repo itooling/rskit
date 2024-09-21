@@ -30,14 +30,14 @@ println!("res is: {}", String::from_utf8(res).unwrap());
 - fast_log
 ```rust
 rskit::Log::default().init().unwrap();
-log::info!("init log ...");
+println!("init log ...");
 ```
 
 - config
 ```rust
-let mut settings = Configs::<Settings>::new();
-let config = settings.init(None).unwrap();
-log::info!("version:{}", config.app.version);
+let mut config = rskit::Configs::<Settings>::new();
+let settings = config.init(None).unwrap();
+println!("version: {}", settings.app.version);
 ```
 
 ### serde

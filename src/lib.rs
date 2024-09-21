@@ -71,14 +71,13 @@ impl Log {
     }
 }
 
-#[derive(Default)]
-pub struct Configs<T: Serialize + Deserialize<'static> + Default> {
-    config: T,
+pub struct Configs<T: Serialize + Deserialize<'static>> {
+    config: Option<T>,
 }
 
-impl<T: Serialize + Deserialize<'static> + Default> Configs<T> {
+impl<T: Serialize + Deserialize<'static>> Configs<T> {
     pub fn new() -> Self {
-        Configs::default()
+        Configs { config: None }
     }
     pub fn init(&mut self, name: Option<String>) -> Option<&T> {
         match config::Config::builder()
@@ -90,8 +89,8 @@ impl<T: Serialize + Deserialize<'static> + Default> Configs<T> {
         {
             Ok(cfg) => match cfg.try_deserialize::<T>() {
                 Ok(s) => {
-                    self.config = s;
-                    return Some(&self.config);
+                    self.config = Some(s);
+                    return self.config.as_ref();
                 }
                 Err(e) => {
                     log::error!("deserialize config error: {:?}", e);
@@ -123,14 +122,14 @@ mod tests {
     fn test_log() {
         use std::{thread, time::Duration};
         Log::default().init().unwrap();
-        log::info!("init log ...");
+        println!("init log ...");
         thread::sleep(Duration::from_secs(1));
     }
 
     #[test]
     fn test_config() {
-        let mut settings = Configs::<Settings>::new();
-        let config = settings.init(None).unwrap();
-        log::info!("version:{}", config.app.version);
+        let mut config = Configs::<Settings>::new();
+        let settings = config.init(None).unwrap();
+        println!("version: {}", settings.app.version);
     }
 }
