@@ -1,5 +1,7 @@
+#[cfg(feature = "default")]
 pub mod base;
 
+#[cfg(feature = "default")]
 pub use base::*;
 
 use fast_log::{

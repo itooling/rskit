@@ -1,8 +1,6 @@
-# rskit
+# rust kit
 
-## rust kit
-
-### cache
+## cache
 You can use cache to store data and support multi-threaded sharing.
 ```rust
 let cache = rskit::cache::Cache::new();
@@ -11,7 +9,7 @@ let name = cache.get::<&str>("name").unwrap();
 println!("name is {}", name);
 ```
 
-### str
+## str
 - string to base64
 ```rust
 let s = "hello world";
@@ -26,7 +24,7 @@ let res = btoa(&ss).unwrap();
 println!("res is: {}", String::from_utf8(res).unwrap());
 ```
 
-### lib
+## lib
 - fast_log
 ```rust
 rskit::Log::default().init().unwrap();
@@ -40,13 +38,13 @@ let settings = config.init(None).unwrap();
 println!("version: {}", settings.app.version);
 ```
 
-### serde
+## serde
 - to_bin
 - from_bin
 - to_json
 - from_json
 
-### hash
+## hash
 - sha_256
 - sha_512
 - hash_256
