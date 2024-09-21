@@ -1,4 +1,5 @@
 pub mod base;
+
 pub use base::*;
 
 use fast_log::{
@@ -70,31 +71,37 @@ impl Log {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct App {
-    version: String,
+#[derive(Default)]
+pub struct Configs<T: Serialize + Deserialize<'static> + Default> {
+    config: T,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Settings {
-    app: App,
-}
-
-pub fn init_config() {
-    let name = std::env::var("RUN_ENV").unwrap_or_else(|_| "dev".into());
-    match config::Config::builder()
-        .add_source(config::File::with_name(&format!("{}.toml", name)).required(false))
-        .add_source(config::File::with_name("app.toml"))
-        .build()
-    {
-        Ok(cfg) => match cfg.try_deserialize::<Settings>() {
-            Ok(s) => {
-                println!("settings: {:?}", s);
+impl<T: Serialize + Deserialize<'static> + Default> Configs<T> {
+    pub fn new() -> Self {
+        Configs::default()
+    }
+    pub fn init(&mut self, name: Option<String>) -> Option<&T> {
+        match config::Config::builder()
+            .add_source(
+                config::File::with_name(&format!("{}.toml", name.unwrap_or("app".to_string())))
+                    .required(false),
+            )
+            .build()
+        {
+            Ok(cfg) => match cfg.try_deserialize::<T>() {
+                Ok(s) => {
+                    self.config = s;
+                    return Some(&self.config);
+                }
+                Err(e) => {
+                    log::error!("deserialize config error: {:?}", e);
+                    None
+                }
+            },
+            Err(e) => {
+                log::error!("init config error: {:?}", e);
+                None
             }
-            Err(e) => log::error!("deserialize config error: {:?}", e),
-        },
-        Err(e) => {
-            log::error!("init config error: {:?}", e);
         }
     }
 }
@@ -102,6 +109,15 @@ pub fn init_config() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[derive(Debug, Serialize, Deserialize, Default)]
+    pub struct Settings {
+        app: App,
+    }
+    #[derive(Debug, Serialize, Deserialize, Default)]
+    struct App {
+        version: String,
+    }
 
     #[test]
     fn test_log() {
@@ -113,7 +129,8 @@ mod tests {
 
     #[test]
     fn test_config() {
-        init_config();
-        log::info!("init config ...");
+        let mut settings = Configs::<Settings>::new();
+        let config = settings.init(None).unwrap();
+        log::info!("version:{}", config.app.version);
     }
 }
