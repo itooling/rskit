@@ -25,8 +25,8 @@ pub struct Log {
     pub level: LevelFilter,
 }
 
-impl Default for Log {
-    fn default() -> Self {
+impl Log {
+    pub fn new() -> Self {
         let dir = match std::env::current_dir() {
             Ok(p) => p.to_str().expect("current dir error").to_string(),
             Err(_) => "./".to_string(),
@@ -40,9 +40,7 @@ impl Default for Log {
             level: log::LevelFilter::Info,
         }
     }
-}
 
-impl Log {
     pub fn init(&self) -> Result<&'static Logger, LogError> {
         fast_log::init(
             Config::new()
