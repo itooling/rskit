@@ -244,7 +244,6 @@ mod tests {
     #[test]
     fn test_rsa() {
         let (pri_key, pub_key) = generate_rsa_pair(None);
-
         let src = "hello world";
         let enc = encrypt_rsa_base(&pub_key, src.as_bytes()).unwrap();
         let res = decrypt_rsa_base(&pri_key, &enc).unwrap();

@@ -16,6 +16,8 @@ use fast_log::{
 use log::LevelFilter;
 use serde::{Deserialize, Serialize};
 
+pub use log;
+
 pub struct Log {
     pub chan: Option<usize>,
     pub path: String,
