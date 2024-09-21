@@ -1,7 +1,7 @@
 use base64::{prelude::BASE64_STANDARD, Engine};
 use sha2::{Digest, Sha256, Sha512};
 
-use crate::tools::err::Error;
+use crate::base::err::Error;
 
 /// encode
 pub fn atob(s: &[u8]) -> Result<String, Error> {

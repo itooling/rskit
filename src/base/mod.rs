@@ -1,4 +1,4 @@
-pub mod base;
+pub mod cache;
 pub mod crypto;
 pub mod db;
 #[cfg(feature = "ecdh")]
@@ -7,3 +7,4 @@ pub mod err;
 pub mod http;
 pub mod nosql;
 pub mod sd;
+pub mod str;

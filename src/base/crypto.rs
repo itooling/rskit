@@ -10,7 +10,7 @@ use rsa::{
 
 use aes_gcm::{aead::Aead, AeadCore, Aes128Gcm, Aes256Gcm, Key, KeyInit, Nonce};
 
-use crate::tools::err::Error;
+use crate::base::err::Error;
 
 type Aes128CbcEnc = cbc::Encryptor<aes::Aes128>;
 type Aes128CbcDec = cbc::Decryptor<aes::Aes128>;
