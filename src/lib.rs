@@ -33,7 +33,7 @@ impl Log {
         };
         Log {
             chan: Some(100000),
-            path: format!("{}/logs/app.log", dir),
+            path: format!("{}/log/app.log", dir),
             roll: Rolling::new(RollingType::BySize(LogSize::MB(100))),
             keep: KeepType::KeepNum(10),
             packer: LogPacker {},
@@ -121,8 +121,8 @@ mod tests {
     #[test]
     fn test_log() {
         use std::{thread, time::Duration};
-        Log::default().init().unwrap();
-        println!("init log ...");
+        Log::new().init_file().unwrap();
+        log::info!("init log ...");
         thread::sleep(Duration::from_secs(1));
     }
 
