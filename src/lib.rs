@@ -18,6 +18,11 @@ use serde::{Deserialize, Serialize};
 
 pub use log;
 
+#[cfg(debug_assertions)]
+pub const RUST_LOG: LevelFilter = LevelFilter::Debug;
+#[cfg(not(debug_assertions))]
+pub const RUST_LOG: LevelFilter = LevelFilter::Info;
+
 pub struct Log {
     pub chan: Option<usize>,
     pub path: String,
@@ -39,7 +44,7 @@ impl Log {
             roll: Rolling::new(RollingType::BySize(LogSize::MB(100))),
             keep: KeepType::KeepNum(10),
             packer: LogPacker {},
-            level: log::LevelFilter::Info,
+            level: RUST_LOG,
         }
     }
 
