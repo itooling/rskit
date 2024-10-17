@@ -21,7 +21,7 @@ pub static SPOOL: LazyLock<SqlitePool> = LazyLock::new(|| {
             .await
             .expect("connect sql error");
 
-            let sql = r#"
+            let sql = r###"
                 create table if not exists user (
                     id integer primary key autoincrement,
                     created_at timestamp default current_timestamp,
@@ -31,10 +31,10 @@ pub static SPOOL: LazyLock<SqlitePool> = LazyLock::new(|| {
                     username text,
                     nickname text,
                     password text,
-                    age int,
+                    age integer,
                     sex text
                 )
-            "#;
+            "###;
 
             sqlx::query(sql)
                 .execute(&pool)
@@ -76,30 +76,57 @@ impl User {
             nickname: Some("张三".to_string()),
             password: Some("123456".to_string()),
             age: Some(18),
+            sex: Some(Sex::Male),
             ..Default::default()
         }
     }
-    async fn list() -> Result<Vec<User>, sqlx::Error> {
-        sqlx::query_as::<_, User>("select * from user")
-            .fetch_all(&*SPOOL)
-            .await
-    }
 
-    async fn insert(&self) -> Result<(), sqlx::Error> {
-        let sql = r#"
-            insert into user (username, nickname, password, age) 
-            values (?,?,?,?)
-            "#;
+    async fn add(&self) -> Result<(), sqlx::Error> {
+        let sql = r###"
+            insert into user
+            (username, nickname, password, age, sex) 
+            values
+            (?, ?, ?, ?, ?)
+            "###;
 
         sqlx::query(sql)
             .bind(&self.username)
             .bind(&self.nickname)
             .bind(&self.password)
             .bind(&self.age)
-            .fetch_one(&*SPOOL)
+            .bind(&self.sex)
+            .execute(&*SPOOL)
             .await?;
 
         Ok(())
+    }
+
+    async fn list() -> Result<Vec<User>, sqlx::Error> {
+        sqlx::query_as::<_, User>("select * from user")
+            .fetch_all(&*SPOOL)
+            .await
+    }
+
+    async fn get(id: i64) -> Result<User, sqlx::Error> {
+        sqlx::query_as::<_, User>("select * from user where id = ?")
+            .bind(id)
+            .fetch_one(&*SPOOL)
+            .await
+    }
+
+    async fn ids(ids: &[i64]) -> Result<Vec<User>, sqlx::Error> {
+        let ids = ids
+            .iter()
+            .map(i64::to_string)
+            .collect::<Vec<String>>()
+            .join(",");
+        let sql = format!("select * from user where id in ({ids})");
+        let sql = sql.as_str();
+
+        sqlx::query_as::<_, User>(sql)
+            .bind(ids)
+            .fetch_all(&*SPOOL)
+            .await
     }
 }
 
@@ -108,7 +135,7 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_insert() {
+    async fn test_add() {
         let _ = tokio::runtime::Handle::current()
             .spawn_blocking(|| {
                 let _ = &*SPOOL;
@@ -116,11 +143,11 @@ mod tests {
             .await;
 
         let user = User::new();
-        match user.insert().await {
+        match user.add().await {
             Ok(_) => {
-                println!("insert success");
+                println!("add success");
             }
-            Err(e) => println!("select user error: {:?}", e),
+            Err(e) => println!("add error: {:?}", e),
         }
     }
 
@@ -134,9 +161,41 @@ mod tests {
 
         match User::list().await {
             Ok(users) => {
-                println!("users: {:?}", serde_json::to_string(&users).unwrap());
+                println!("users: {:?}", users);
             }
-            Err(e) => println!("select user error: {:?}", e),
+            Err(e) => println!("list error: {:?}", e),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_get() {
+        let _ = tokio::runtime::Handle::current()
+            .spawn_blocking(|| {
+                let _ = &*SPOOL;
+            })
+            .await;
+
+        match User::get(1).await {
+            Ok(user) => {
+                println!("user: {:?}", user);
+            }
+            Err(e) => println!("get error: {:?}", e),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_ids() {
+        let _ = tokio::runtime::Handle::current()
+            .spawn_blocking(|| {
+                let _ = &*SPOOL;
+            })
+            .await;
+
+        match User::ids(&[1, 2, 3]).await {
+            Ok(users) => {
+                println!("user: {:?}", users);
+            }
+            Err(e) => println!("ids error: {:?}", e),
         }
     }
 }
