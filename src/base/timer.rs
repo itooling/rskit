@@ -1,4 +1,4 @@
-use std::{str::FromStr, time};
+use std::str::FromStr;
 
 use chrono::Local;
 
@@ -17,7 +17,7 @@ where
     }
 }
 
-pub async fn task_interval<F>(period: time::Duration, f: F)
+pub async fn task_interval<F>(period: std::time::Duration, f: F)
 where
     F: Fn(),
     F: Send + 'static,
@@ -29,7 +29,7 @@ where
     }
 }
 
-pub async fn task_interval_at<F>(start: tokio::time::Instant, period: time::Duration, f: F)
+pub async fn task_interval_at<F>(start: tokio::time::Instant, period: std::time::Duration, f: F)
 where
     F: Fn(),
     F: Send + 'static,
