@@ -8,3 +8,4 @@ pub mod http;
 pub mod nosql;
 pub mod sd;
 pub mod str;
+pub mod timer;
