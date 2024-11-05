@@ -41,6 +41,21 @@ pub fn hash_512(s: &str) -> String {
     return format!("{:x}", res);
 }
 
+pub fn pwstr_to_string(pwstr: *const u16) -> Option<String> {
+    if !pwstr.is_null() {
+        let len = unsafe {
+            let mut len = 0;
+            while *pwstr.offset(len) != 0 {
+                len += 1;
+            }
+            len
+        };
+        let data = unsafe { std::slice::from_raw_parts(pwstr, len as usize) };
+        return Some(String::from_utf16_lossy(data));
+    }
+    None
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
