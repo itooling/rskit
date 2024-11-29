@@ -1,16 +1,17 @@
 #![allow(dead_code)]
 
-use std::sync::LazyLock;
+use std::{env, sync::LazyLock};
 
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use sqlx::{
+    postgres::PgPoolOptions,
     prelude::{FromRow, Type},
     sqlite::SqliteConnectOptions,
-    SqlitePool,
+    PgPool, SqlitePool,
 };
 
-pub static SPOOL: LazyLock<SqlitePool> = LazyLock::new(|| {
+pub static LITE_POOL: LazyLock<SqlitePool> = LazyLock::new(|| {
     tokio::task::block_in_place(|| {
         tokio::runtime::Handle::current().block_on(async {
             let pool = SqlitePool::connect_with(
@@ -21,7 +22,7 @@ pub static SPOOL: LazyLock<SqlitePool> = LazyLock::new(|| {
             .await
             .expect("connect sql error");
 
-            let sql = r###"
+            let sql = r#"
                 create table if not exists user (
                     id integer primary key autoincrement,
                     created_at timestamp default current_timestamp,
@@ -34,15 +35,42 @@ pub static SPOOL: LazyLock<SqlitePool> = LazyLock::new(|| {
                     age integer,
                     sex text
                 )
-            "###;
+            "#;
 
             sqlx::query(sql)
                 .execute(&pool)
                 .await
-                .expect("create table error");
+                .expect("create table user error");
+
+            let sql = r#"
+                create table if not exists work (
+                    id integer primary key autoincrement,
+                    post text
+                )
+            "#;
+
+            sqlx::query(sql)
+                .execute(&pool)
+                .await
+                .expect("create table work error");
 
             pool
         })
+    })
+});
+
+pub static PG_POOL: LazyLock<PgPool> = LazyLock::new(|| {
+    tokio::runtime::Handle::current().block_on(async {
+        dotenvy::dotenv().expect("init env error");
+        let database = env::var("DATABASE_URL")
+            .unwrap_or("postgres://postgres:123456@127.0.0.1:5432/one".to_string());
+
+        let pool = PgPoolOptions::new()
+            .max_connections(10)
+            .connect(&database)
+            .await
+            .expect("connect sql error");
+        pool
     })
 });
 
@@ -57,7 +85,7 @@ enum Sex {
 
 #[derive(Debug, Default, Serialize, Deserialize, FromRow)]
 struct User {
-    id: Option<u64>,
+    id: Option<i64>,
     created_at: Option<DateTime<Local>>,
     updated_at: Option<DateTime<Local>>,
     created_by: Option<String>,
@@ -82,12 +110,12 @@ impl User {
     }
 
     async fn add(&self) -> Result<(), sqlx::Error> {
-        let sql = r###"
+        let sql = r#"
             insert into user
             (username, nickname, password, age, sex) 
             values
-            (?, ?, ?, ?, ?)
-            "###;
+            ($1, $2, $3, $4, $5)
+            "#;
 
         sqlx::query(sql)
             .bind(&self.username)
@@ -95,7 +123,7 @@ impl User {
             .bind(&self.password)
             .bind(&self.age)
             .bind(&self.sex)
-            .execute(&*SPOOL)
+            .execute(&*LITE_POOL)
             .await?;
 
         Ok(())
@@ -103,14 +131,14 @@ impl User {
 
     async fn list() -> Result<Vec<User>, sqlx::Error> {
         sqlx::query_as::<_, User>("select * from user")
-            .fetch_all(&*SPOOL)
+            .fetch_all(&*LITE_POOL)
             .await
     }
 
     async fn get(id: i64) -> Result<User, sqlx::Error> {
         sqlx::query_as::<_, User>("select * from user where id = ?")
             .bind(id)
-            .fetch_one(&*SPOOL)
+            .fetch_one(&*LITE_POOL)
             .await
     }
 
@@ -125,7 +153,41 @@ impl User {
 
         sqlx::query_as::<_, User>(sql)
             .bind(ids)
-            .fetch_all(&*SPOOL)
+            .fetch_all(&*LITE_POOL)
+            .await
+    }
+}
+
+#[derive(Debug, Default)]
+struct Work {
+    id: Option<i64>,
+    post: Option<String>,
+}
+
+impl Work {
+    fn new() -> Self {
+        Work {
+            post: Some("it".to_string()),
+            ..Default::default()
+        }
+    }
+
+    async fn add(&self) -> Result<(), sqlx::Error> {
+        let sql = r#"
+            insert into work
+            (post) 
+            values
+            ($1)
+            "#;
+
+        sqlx::query(sql).bind(&self.post).execute(&*PG_POOL).await?;
+
+        Ok(())
+    }
+
+    async fn list() -> Result<Vec<Work>, sqlx::Error> {
+        sqlx::query_as!(Work, "select * from work")
+            .fetch_all(&*PG_POOL)
             .await
     }
 }
@@ -138,7 +200,7 @@ mod tests {
     async fn test_add() {
         let _ = tokio::runtime::Handle::current()
             .spawn_blocking(|| {
-                let _ = &*SPOOL;
+                let _ = &*LITE_POOL;
             })
             .await;
 
@@ -155,7 +217,7 @@ mod tests {
     async fn test_list() {
         let _ = tokio::runtime::Handle::current()
             .spawn_blocking(|| {
-                let _ = &*SPOOL;
+                let _ = &*LITE_POOL;
             })
             .await;
 
@@ -171,7 +233,7 @@ mod tests {
     async fn test_get() {
         let _ = tokio::runtime::Handle::current()
             .spawn_blocking(|| {
-                let _ = &*SPOOL;
+                let _ = &*LITE_POOL;
             })
             .await;
 
@@ -187,7 +249,7 @@ mod tests {
     async fn test_ids() {
         let _ = tokio::runtime::Handle::current()
             .spawn_blocking(|| {
-                let _ = &*SPOOL;
+                let _ = &*LITE_POOL;
             })
             .await;
 
@@ -196,6 +258,39 @@ mod tests {
                 println!("user: {:?}", users);
             }
             Err(e) => println!("ids error: {:?}", e),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_add_work() {
+        let _ = tokio::runtime::Handle::current()
+            .spawn_blocking(|| {
+                let _ = &*PG_POOL;
+            })
+            .await;
+
+        let work = Work::new();
+        match work.add().await {
+            Ok(_) => {
+                println!("add success");
+            }
+            Err(e) => println!("add error: {:?}", e),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_list_work() {
+        let _ = tokio::runtime::Handle::current()
+            .spawn_blocking(|| {
+                let _ = &*PG_POOL;
+            })
+            .await;
+
+        match Work::list().await {
+            Ok(works) => {
+                println!("works: {:?}", works);
+            }
+            Err(e) => println!("list error: {:?}", e),
         }
     }
 }

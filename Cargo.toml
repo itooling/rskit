@@ -20,6 +20,7 @@ cbc = { version = "0.1.2", features = ["std"] }
 chrono = { version = "0.4.38", features = ["serde"] }
 config = "0.14.0"
 cron = "0.12.1"
+dotenvy = "0.15.7"
 fast_log = "1.7.3"
 hex = "0.4.3"
 hex-literal = "0.4.0"
@@ -33,5 +34,5 @@ rsa = { version = "0.9.6", features = ["serde", "sha2"] }
 serde = { version = "1.0.202", features = ["derive"] }
 serde_json = "1.0.117"
 sha2 = "0.10.8"
-sqlx = { version = "0.8.0", features = ["chrono", "macros", "runtime-tokio", "sqlite"] }
+sqlx = { version = "0.8.0", features = ["chrono", "macros", "runtime-tokio", "sqlite", "postgres"] }
 tokio = { version = "1.39.2", features = ["full"] }
