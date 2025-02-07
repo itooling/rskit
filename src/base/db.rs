@@ -158,7 +158,7 @@ impl User {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, FromRow)]
 struct Work {
     id: Option<i64>,
     post: Option<String>,
@@ -186,7 +186,8 @@ impl Work {
     }
 
     async fn list() -> Result<Vec<Work>, sqlx::Error> {
-        sqlx::query_as!(Work, "select * from work")
+        //sqlx::query_as!(Work, "select * from work")
+        sqlx::query_as::<_, Work>("select * from work")
             .fetch_all(&*PG_POOL)
             .await
     }

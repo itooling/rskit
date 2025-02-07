@@ -1,16 +1,26 @@
+use anyhow::Result;
+use base58::{FromBase58, ToBase58};
 use base64::{prelude::BASE64_STANDARD, Engine};
 use sha2::{Digest, Sha256, Sha512};
 
-use crate::base::err::Error;
-
-/// encode
-pub fn atob(s: &[u8]) -> Result<String, Error> {
+pub fn base64_encode(s: &[u8]) -> Result<String> {
     Ok(BASE64_STANDARD.encode(s))
 }
 
-/// decode
-pub fn btoa(s: &str) -> Result<Vec<u8>, Error> {
-    BASE64_STANDARD.decode(s).map_err(Error::custom)
+pub fn base64_decode(s: &str) -> Result<Vec<u8>> {
+    let res = BASE64_STANDARD.decode(s)?;
+    Ok(res)
+}
+
+pub fn base58_encode(s: &[u8]) -> Result<String> {
+    Ok(s.to_base58())
+}
+
+pub fn base58_decode(s: &str) -> Result<Vec<u8>> {
+    let res = s
+        .from_base58()
+        .map_err(|e| anyhow::anyhow!(format!("{e:?}")))?;
+    Ok(res)
 }
 
 pub fn sha_256(s: &[u8]) -> String {
@@ -61,17 +71,32 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_atob() {
+    fn test_base64_encode() {
         let s = "hello world";
-        let res = atob(s.as_bytes()).unwrap();
+        let res = base64_encode(s.as_bytes()).unwrap();
         println!("res is: {}", res);
     }
 
     #[test]
-    fn test_btoa() {
+    fn test_base64_decode() {
         let s = "hello world";
-        let ss = atob(s.as_bytes()).unwrap();
-        let res = btoa(&ss).unwrap();
+        let ss = base64_encode(s.as_bytes()).unwrap();
+        let res = base64_decode(&ss).unwrap();
+        println!("res is: {}", String::from_utf8(res).unwrap());
+    }
+
+    #[test]
+    fn test_base58_encode() {
+        let s = "hello world";
+        let res = base58_encode(s.as_bytes()).unwrap();
+        println!("res is: {}", res);
+    }
+
+    #[test]
+    fn test_base58_decode() {
+        let s = "hello world";
+        let ss = base58_encode(s.as_bytes()).unwrap();
+        let res = base58_decode(&ss).unwrap();
         println!("res is: {}", String::from_utf8(res).unwrap());
     }
 

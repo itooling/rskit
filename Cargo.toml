@@ -1,11 +1,11 @@
 [package]
 name = "rskit"
-version = "0.0.30"
+version = "0.0.31"
 edition = "2021"
 license = "MIT"
 description = "rust kit"
 documentation = "https://docs.rs/rskit"
-repository = "https://github.com/itooling/rskit"
+repository = "https://gitee.com/itooling/rskit"
 
 [features]
 default = []
@@ -14,6 +14,8 @@ ecdh = ["p256"]
 [dependencies]
 aes = "0.8.4"
 aes-gcm = "0.10.3"
+anyhow = "1.0.95"
+base58 = "0.2.0"
 base64 = "0.22.1"
 bincode = "1.3.3"
 cbc = { version = "0.1.2", features = ["std"] }
