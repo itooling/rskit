@@ -10,17 +10,30 @@ println!("name is {}", name);
 ```
 
 ## str
+- string to base58
+```rust
+let s = "hello world";
+let res = base58_encode(s.as_bytes()).unwrap();
+println!("res is: {}", res);
+```
+- base58 to string
+```rust
+let s = "hello world";
+let ss = base58_encode(s.as_bytes()).unwrap();
+let res = base58_decode(&ss).unwrap();
+println!("res is: {}", String::from_utf8(res).unwrap());
+```
 - string to base64
 ```rust
 let s = "hello world";
-let res = atob(s.as_bytes()).unwrap();
+let res = base64_encode(s.as_bytes()).unwrap();
 println!("res is: {}", res);
 ```
 - base64 to string
 ```rust
 let s = "hello world";
-let ss = atob(s.as_bytes()).unwrap();
-let res = btoa(&ss).unwrap();
+let ss = base64_encode(s.as_bytes()).unwrap();
+let res = base64_decode(&ss).unwrap();
 println!("res is: {}", String::from_utf8(res).unwrap());
 ```
 
