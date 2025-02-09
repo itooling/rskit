@@ -7,10 +7,6 @@ description = "rust kit"
 documentation = "https://docs.rs/rskit"
 repository = "https://gitee.com/itooling/rskit"
 
-[features]
-default = []
-
-
 [dependencies]
 aes = "0.8.4"
 aes-gcm = "0.10.3"
