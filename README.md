@@ -9,15 +9,17 @@ let name = cache.get::<&str>("name").unwrap();
 println!("name is {}", name);
 ```
 
-## str
+## code
 - string to base58
 ```rust
+use rskit::base::code::base58_encode;
 let s = "hello world";
 let res = base58_encode(s.as_bytes()).unwrap();
 println!("res is: {}", res);
 ```
 - base58 to string
 ```rust
+use rskit::base::code::{base58_encode, base58_decode};
 let s = "hello world";
 let ss = base58_encode(s.as_bytes()).unwrap();
 let res = base58_decode(&ss).unwrap();
@@ -25,12 +27,14 @@ println!("res is: {}", String::from_utf8(res).unwrap());
 ```
 - string to base64
 ```rust
+use rskit::base::code::base64_encode;
 let s = "hello world";
 let res = base64_encode(s.as_bytes()).unwrap();
 println!("res is: {}", res);
 ```
 - base64 to string
 ```rust
+use rskit::base::code::{base64_encode, base64_decode};
 let s = "hello world";
 let ss = base64_encode(s.as_bytes()).unwrap();
 let res = base64_decode(&ss).unwrap();
@@ -86,13 +90,13 @@ match from_json::<'_, Aoo>(s) {
 ## hash
 - hash_256
 ```rust
-use rskit::str::*;
+use rskit::base::code::hash_256;
 let res = hash_256("hello world");
 println!("hash 256 is {}", res);
 ```
 - hash_512
 ```rust
-use rskit::str::*;
+use rskit::base::code::hash_512;
 let res = hash_512("hello world");
 println!("hash 512 is {}", res);
 ```
@@ -100,13 +104,13 @@ println!("hash 512 is {}", res);
 ## crypto
 - generate aes key
 ```rust
-use rskit::crypto::*;
+use rskit::crypto::aes::*;
 gen_rand_string(None);
 ```
 
 - aes cbc 128
 ```rust
-use rskit::crypto::*;
+use rskit::crypto::aes::*;
 let key = gen_rand_string(Some(16));
 let key = key.as_bytes();
 let des = encrypt_aes_cbc_128(key, b"hello world");
@@ -119,7 +123,7 @@ println!(
 
 - aes cbc 256
 ```rust
-use rskit::crypto::*;
+use rskit::crypto::aes::*;
 let key = gen_rand_string(Some(32));
 let key = key.as_bytes();
 let des = encrypt_aes_cbc_256(key, b"hello world");
@@ -132,7 +136,7 @@ println!(
 
 - aes gcm 128
 ```rust
-use rskit::crypto::*;
+use rskit::crypto::aes::*;
 let key = aes_gcm_key_128();
 let nonce = aes_gcm_nonce_128();
 let des = encrypt_aes_gcm_128(&key, &nonce, b"hello world");
@@ -145,7 +149,7 @@ println!(
 
 - aes gcm 256
 ```rust
-use rskit::crypto::*;
+use rskit::crypto::aes::*;
 let key = aes_gcm_key_256();
 let nonce = aes_gcm_nonce_256();
 let des = encrypt_aes_gcm_256(&key, &nonce, b"hello world");
@@ -158,14 +162,14 @@ println!(
 
 - generate rsa pair
 ```rust
-use rskit::crypto::*;
+use rskit::crypto::rsa::*;
 let res = generate_rsa_pair(None);
 println!("key pair: {:?}", res);
 ```
 
 - rsa
 ```rust
-use rskit::crypto::*;
+use rskit::crypto::rsa::*;
 let (pri_key, pub_key) = generate_rsa_pair(None);
 let src = "hello world";
 let enc = encrypt_rsa_base(&pub_key, src.as_bytes()).unwrap();

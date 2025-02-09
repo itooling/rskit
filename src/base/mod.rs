@@ -1,9 +1,9 @@
 pub mod cache;
+pub mod code;
 pub mod db;
 pub mod http;
 pub mod nosql;
 pub mod num;
 pub mod sd;
-pub mod str;
 pub mod sys;
 pub mod timer;
