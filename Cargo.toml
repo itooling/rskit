@@ -1,6 +1,6 @@
 [package]
 name = "rskit"
-version = "0.0.31"
+version = "0.0.32"
 edition = "2021"
 license = "MIT"
 description = "rust kit"
@@ -9,7 +9,7 @@ repository = "https://gitee.com/itooling/rskit"
 
 [features]
 default = []
-ecdh = ["p256"]
+
 
 [dependencies]
 aes = "0.8.4"
@@ -30,7 +30,7 @@ hex-literal = "0.4.0"
 log = "0.4.21"
 md5 = "0.7.0"
 num-bigint = "0.4.6"
-p256 = { version = "0.13.2", features = ["ecdh"], optional = true }
+p256 = { version = "0.13.2", features = ["ecdh"] }
 rand = "0.8.5"
 redis = "0.26.1"
 reqwest = { version = "0.12.5", features = ["json"] }

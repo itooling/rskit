@@ -1,7 +1,6 @@
+use anyhow::{Error, Result};
 use p256::{ecdh::diffie_hellman, PublicKey, SecretKey};
 use rand::thread_rng;
-
-use super::err::Error;
 
 pub fn generate_keypair() -> (String, String) {
     let sk = SecretKey::random(&mut thread_rng());
@@ -30,20 +29,26 @@ pub fn generate_shared(sk: String, pk: String) -> Result<String, Error> {
             return Ok(res);
         }
     }
-    Err(Error::EcdhError(String::from("generate shared error")))
+    Err(Error::msg("generate shared error"))
 }
 
-#[test]
-fn test_generate_keypair() {
-    generate_keypair();
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-#[test]
-fn test_generate_shared() {
-    let p1 = generate_keypair();
-    let p2 = generate_keypair();
-    let res1 = generate_shared(p1.0, p2.1).unwrap();
-    let res2 = generate_shared(p2.0, p1.1).unwrap();
-    println!("shared key1 is:{}", res1);
-    println!("shared key2 is:{}", res2);
+    #[test]
+    fn test_generate_keypair() {
+        generate_keypair();
+    }
+
+    #[test]
+    fn test_generate_shared() {
+        println!("test_generate_shared");
+        let p1 = generate_keypair();
+        let p2 = generate_keypair();
+        let res1 = generate_shared(p1.0, p2.1).unwrap();
+        let res2 = generate_shared(p2.0, p1.1).unwrap();
+        println!("shared key1 is:{}", res1);
+        println!("shared key2 is:{}", res2);
+    }
 }

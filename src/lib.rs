@@ -1,7 +1,7 @@
-#[cfg(feature = "default")]
 pub mod base;
 
-#[cfg(feature = "default")]
+pub mod crypto;
+
 pub use base::*;
 
 use fast_log::{
