@@ -5,10 +5,10 @@ use std::{env, sync::LazyLock};
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use sqlx::{
+    PgPool, SqlitePool,
     postgres::PgPoolOptions,
     prelude::{FromRow, Type},
     sqlite::SqliteConnectOptions,
-    PgPool, SqlitePool,
 };
 
 pub static LITE_POOL: LazyLock<SqlitePool> = LazyLock::new(|| {
@@ -60,17 +60,19 @@ pub static LITE_POOL: LazyLock<SqlitePool> = LazyLock::new(|| {
 });
 
 pub static PG_POOL: LazyLock<PgPool> = LazyLock::new(|| {
-    tokio::runtime::Handle::current().block_on(async {
-        dotenvy::dotenv().expect("init env error");
-        let database = env::var("DATABASE_URL")
-            .unwrap_or("postgres://postgres:123456@127.0.0.1:5432/one".to_string());
+    tokio::task::block_in_place(|| {
+        tokio::runtime::Handle::current().block_on(async {
+            dotenvy::dotenv().expect("init env error");
+            let database = env::var("DATABASE_URL")
+                .unwrap_or("postgres://postgres:123456@127.0.0.1:5432/one".to_string());
 
-        let pool = PgPoolOptions::new()
-            .max_connections(10)
-            .connect(&database)
-            .await
-            .expect("connect sql error");
-        pool
+            let pool = PgPoolOptions::new()
+                .max_connections(10)
+                .connect(&database)
+                .await
+                .expect("connect sql error");
+            pool
+        })
     })
 });
 
@@ -230,14 +232,8 @@ mod tests {
         }
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_get() {
-        let _ = tokio::runtime::Handle::current()
-            .spawn_blocking(|| {
-                let _ = &*LITE_POOL;
-            })
-            .await;
-
         match User::get(1).await {
             Ok(user) => {
                 println!("user: {:?}", user);
@@ -245,15 +241,8 @@ mod tests {
             Err(e) => println!("get error: {:?}", e),
         }
     }
-
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_ids() {
-        let _ = tokio::runtime::Handle::current()
-            .spawn_blocking(|| {
-                let _ = &*LITE_POOL;
-            })
-            .await;
-
         match User::ids(&[1, 2, 3]).await {
             Ok(users) => {
                 println!("user: {:?}", users);
@@ -262,14 +251,8 @@ mod tests {
         }
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_add_work() {
-        let _ = tokio::runtime::Handle::current()
-            .spawn_blocking(|| {
-                let _ = &*PG_POOL;
-            })
-            .await;
-
         let work = Work::new();
         match work.add().await {
             Ok(_) => {
@@ -279,14 +262,8 @@ mod tests {
         }
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_list_work() {
-        let _ = tokio::runtime::Handle::current()
-            .spawn_blocking(|| {
-                let _ = &*PG_POOL;
-            })
-            .await;
-
         match Work::list().await {
             Ok(works) => {
                 println!("works: {:?}", works);

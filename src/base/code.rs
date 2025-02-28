@@ -1,6 +1,6 @@
 use anyhow::Result;
 use base58::{FromBase58, ToBase58};
-use base64::{prelude::BASE64_STANDARD, Engine};
+use base64::{Engine, prelude::BASE64_STANDARD};
 use sha2::{Digest, Sha256, Sha512};
 
 pub fn base64_encode(s: &[u8]) -> Result<String> {

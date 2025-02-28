@@ -1,5 +1,5 @@
 use anyhow::{Error, Result};
-use p256::{ecdh::diffie_hellman, PublicKey, SecretKey};
+use p256::{PublicKey, SecretKey, ecdh::diffie_hellman};
 use rand::thread_rng;
 
 pub fn generate_keypair() -> (String, String) {

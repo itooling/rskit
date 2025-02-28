@@ -5,13 +5,13 @@ pub mod crypto;
 pub use base::*;
 
 use fast_log::{
+    Config, Logger,
     consts::LogSize,
     error::LogError,
     plugin::{
         file_split::{KeepType, Rolling, RollingType},
         packer::LogPacker,
     },
-    Config, Logger,
 };
 use log::LevelFilter;
 use serde::{Deserialize, Serialize};
