@@ -69,7 +69,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    
+
     #[tokio::test(flavor = "multi_thread")]
     async fn test_task_cron_interval() {
         //use super::*;
