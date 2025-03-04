@@ -9,17 +9,7 @@ pub fn is_running(process: &str) -> bool {
     !output.stdout.is_empty()
 }
 
-#[cfg(target_os = "windows")]
-pub fn set_windows_startup(name: &str) -> Result<(), anyhow::Error> {
-    let exe = std::env::current_exe()?;
-    let exe_name = exe.to_str().unwrap();
-    let hkcu = winreg::RegKey::predef(winreg::enums::HKEY_CURRENT_USER);
-    let (run, _) = hkcu.create_subkey(r"Software\Microsoft\Windows\CurrentVersion\Run")?;
-    run.set_value(name, &exe_name)?;
-    Ok(())
-}
-
-pub fn process_is_running() -> bool {
+pub fn is_running_current() -> bool {
     let pid = std::process::id();
     let exe = std::env::current_exe().unwrap();
     let exe_name = exe.to_str().unwrap();
@@ -30,6 +20,16 @@ pub fn process_is_running() -> bool {
         }
     }
     return false;
+}
+
+#[cfg(target_os = "windows")]
+pub fn set_windows_startup(name: &str) -> Result<(), anyhow::Error> {
+    let exe = std::env::current_exe()?;
+    let exe_name = exe.to_str().unwrap();
+    let hkcu = winreg::RegKey::predef(winreg::enums::HKEY_CURRENT_USER);
+    let (run, _) = hkcu.create_subkey(r"Software\Microsoft\Windows\CurrentVersion\Run")?;
+    run.set_value(name, &exe_name)?;
+    Ok(())
 }
 
 #[cfg(test)]
