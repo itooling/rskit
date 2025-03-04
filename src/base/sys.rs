@@ -37,8 +37,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_process_is_running() {
-        assert_eq!(false, process_is_running());
+    fn test_is_running_current() {
+        assert_eq!(false, is_running_current());
     }
 
     #[test]
