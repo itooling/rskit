@@ -26,6 +26,7 @@ hex-literal = "0.4.0"
 k256 = { version = "0.13.4", features = ["ecdh"] }
 log = "0.4.21"
 md5 = "0.7.0"
+notify = "8.0.0"
 num-bigint = "0.4.6"
 p256 = { version = "0.13.2", features = ["ecdh"] }
 rand = "0.8.5"
