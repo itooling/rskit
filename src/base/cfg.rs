@@ -1,41 +1,66 @@
 use std::{
+    env,
     sync::{Arc, LazyLock, RwLock},
     time::Duration,
 };
 
 use config::{Config, File};
 use notify::{Event, RecommendedWatcher, Watcher};
+use serde::{Deserialize, Serialize};
 
-pub const CONFIG_PATH: &str = "app.toml";
+#[derive(Debug, Serialize, Deserialize, Default)]
+pub struct Settings {
+    pub app: App,
+}
 
-pub static CONFIG: LazyLock<Arc<RwLock<Option<Config>>>> =
-    LazyLock::new(|| Arc::new(RwLock::new(load(CONFIG_PATH))));
+#[derive(Debug, Serialize, Deserialize, Default)]
+pub struct App {
+    pub version: String,
+}
 
-pub fn load(path: &str) -> Option<Config> {
-    match Config::builder().add_source(File::with_name(path)).build() {
-        Ok(c) => Some(c),
+pub static AUTO_CONFIG: LazyLock<Arc<RwLock<Option<Settings>>>> =
+    LazyLock::new(|| Arc::new(RwLock::new(load())));
+
+fn path() -> String {
+    let current_dir = env::current_dir().expect("failed to get current directory");
+    current_dir.join("app.toml").to_string_lossy().to_string()
+}
+
+fn load() -> Option<Settings> {
+    match Config::builder()
+        .add_source(File::with_name(&path()))
+        .build()
+    {
+        Ok(c) => match c.try_deserialize() {
+            Ok(s) => s,
+            Err(e) => {
+                log::error!("deserialize error: {e:?}");
+                None
+            }
+        },
         Err(e) => {
-            println!("config error: {:?}", e);
+            log::error!("config error: {e:?}");
             None
         }
     }
 }
-pub fn refresh() {
-    *CONFIG.write().unwrap() = load(CONFIG_PATH);
+fn refresh() {
+    if let Some(s) = load() {
+        *AUTO_CONFIG.write().unwrap() = Some(s);
+    }
 }
 
-pub fn show() {
-    match CONFIG.read() {
+fn show() {
+    match AUTO_CONFIG.read() {
         Ok(config) => {
             println!("config: {:?}", config);
         }
         Err(e) => {
-            println!("config error: {:?}", e);
+            log::error!("config error: {:?}", e);
         }
     }
 }
-
-pub fn watch() {
+fn watch() {
     let (tx, rx) = std::sync::mpsc::channel();
     let result: Result<RecommendedWatcher, _> = Watcher::new(
         tx,
@@ -44,11 +69,11 @@ pub fn watch() {
     match result {
         Ok(mut watcher) => {
             match watcher.watch(
-                std::path::Path::new(CONFIG_PATH),
+                std::path::Path::new(&path()),
                 notify::RecursiveMode::NonRecursive,
             ) {
                 Ok(_) => (),
-                Err(e) => println!("watch error: {:?}", e),
+                Err(e) => log::error!("watch error: {:?}", e),
             }
 
             loop {
@@ -57,19 +82,24 @@ pub fn watch() {
                         kind: notify::event::EventKind::Modify(_),
                         ..
                     })) => {
-                        println!("refreshing configuration ...");
+                        log::info!("refreshing configuration ...");
                         refresh();
                         show();
                     }
-                    Err(e) => println!("recv error: {e:?}"),
+                    Err(e) => log::error!("recv error: {e:?}"),
                     _ => (),
                 }
             }
         }
         Err(e) => {
-            println!("watcher error: {:?}", e);
+            log::error!("watcher error: {:?}", e);
         }
     }
+}
+
+pub fn init() {
+    show();
+    watch();
 }
 
 #[cfg(test)]
@@ -77,8 +107,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_config() {
-        show();
-        watch();
+    fn test_auto_config() {
+        init();
     }
 }

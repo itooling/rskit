@@ -42,6 +42,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(target_os = "windows")]
     fn test_set_windows_startup() {
         set_windows_startup("test").unwrap();
     }
