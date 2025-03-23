@@ -56,7 +56,7 @@ fn show() {
             println!("config: {:?}", config);
         }
         Err(e) => {
-            log::error!("config error: {:?}", e);
+            log::error!("config error: {e:?}");
         }
     }
 }
@@ -73,7 +73,7 @@ fn watch() {
                 notify::RecursiveMode::NonRecursive,
             ) {
                 Ok(_) => (),
-                Err(e) => log::error!("watch error: {:?}", e),
+                Err(e) => log::error!("watch error: {e:?}"),
             }
 
             loop {
@@ -92,7 +92,7 @@ fn watch() {
             }
         }
         Err(e) => {
-            log::error!("watcher error: {:?}", e);
+            log::error!("watcher error: {e:?}");
         }
     }
 }
