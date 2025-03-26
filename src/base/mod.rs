@@ -1,6 +1,6 @@
 pub mod cache;
-pub mod cfg;
 pub mod code;
+pub mod conf;
 pub mod db;
 pub mod http;
 pub mod nosql;
